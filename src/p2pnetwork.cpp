@@ -103,19 +103,12 @@ bool P2PNetwork::start()
             qWarning() << "Failed to start mDNS discovery";
         }
         
-        // Configure STUN for NAT traversal and public address discovery
+        // Configure STUN servers for NAT traversal. librats probes STUN itself at the start of
+        // its discovery loop and feeds the result into the DHT (external IP + BEP 42 node ID),
+        // so we only register the servers here — no separate probe whose result we'd discard.
         ratsClient_->add_stun_server("stun.l.google.com", 19302);
         ratsClient_->add_stun_server("stun1.l.google.com", 19302);
-        
-        auto publicAddr = ratsClient_->discover_public_address("stun.l.google.com", 19302, 5000);
-        if (publicAddr && publicAddr->is_valid()) {
-            qInfo() << "Public address discovered via STUN:" 
-                    << QString::fromStdString(publicAddr->address) 
-                    << "port:" << publicAddr->port;
-        } else {
-            qWarning() << "Could not discover public address via STUN";
-        }
-        
+
         // Setup GossipSub topics
         setupGossipSub();
         
